@@ -813,6 +813,43 @@ body {
   background: var(--primary-light);
 }
 
+.modal-footer-split {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.modal-footer-split .primary-btn {
+  width: auto;
+  min-width: 140px;
+}
+
+.secondary-text-btn {
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.secondary-text-btn:hover {
+  background: var(--bg-surface-elevated);
+  color: var(--text-main);
+  border-color: var(--text-muted);
+}
+
+.secondary-text-btn.success-flash {
+  border-color: var(--primary);
+  color: var(--primary-light);
+  background: var(--primary-glow);
+}
+
 /* Help Steps */
 .help-step {
   display: flex;

@@ -1,24 +1,38 @@
-/**
- * Perfect Shuffle — Hands-Free Zero-Bend Card Shuffler
- * Core Application Engine
- */
+const STORAGE_KEY = 'perfect_shuffle_preferences_v1';
+
+const DEFAULT_PREFERENCES = {
+  mode: 'clock',
+  deckPreset: '52',
+  deckSize: 52,
+  dealMode: 'counted',
+  speechRate: 1.25,
+  pacerInterval: 1.6,
+  autoPacing: false,
+  voiceEnabled: true,
+  selectedVoiceURI: '',
+  speakCenter: true,
+  speakOclock: false,
+  soundFxEnabled: true,
+  wakeLockEnabled: true
+};
 
 class PerfectShuffleApp {
   constructor() {
-    // Core Configuration
-    this.mode = 'clock'; // 'clock' (13 zones: 0–12) or 'grid' (9 zones: 1–9)
-    this.deckSize = 52;
-    this.dealMode = 'counted'; // 'counted' (tracks counts) or 'casual' (fast spread)
-    this.speechRate = 1.25;
-    this.voiceEnabled = true;
-    this.soundFxEnabled = true;
-    this.speakCenter = true;
-    this.speakOclock = false;
-    this.wakeLockEnabled = true;
+    // Core Configuration (initialized from defaults, then loaded from localStorage)
+    this.mode = DEFAULT_PREFERENCES.mode;
+    this.deckSize = DEFAULT_PREFERENCES.deckSize;
+    this.dealMode = DEFAULT_PREFERENCES.dealMode;
+    this.speechRate = DEFAULT_PREFERENCES.speechRate;
+    this.voiceEnabled = DEFAULT_PREFERENCES.voiceEnabled;
+    this.soundFxEnabled = DEFAULT_PREFERENCES.soundFxEnabled;
+    this.speakCenter = DEFAULT_PREFERENCES.speakCenter;
+    this.speakOclock = DEFAULT_PREFERENCES.speakOclock;
+    this.wakeLockEnabled = DEFAULT_PREFERENCES.wakeLockEnabled;
+    this.selectedVoiceURI = DEFAULT_PREFERENCES.selectedVoiceURI;
     
     // Auto-Pacer
-    this.autoPacing = false;
-    this.pacerInterval = 1.6; // seconds
+    this.autoPacing = DEFAULT_PREFERENCES.autoPacing;
+    this.pacerInterval = DEFAULT_PREFERENCES.pacerInterval;
     this.pacerTimer = null;
 
     // Shuffle Engine State
@@ -98,6 +112,7 @@ class PerfectShuffleApp {
       btnSkipSpot: document.getElementById('btn-skip-spot'),
       btnFinishCasual: document.getElementById('btn-finish-casual'),
       hintReroll: document.getElementById('hint-reroll'),
+      btnRestoreDefaults: document.getElementById('btn-restore-defaults'),
       btnTestVoice: document.getElementById('btn-test-voice'),
       btnShuffleAgain: document.getElementById('btn-shuffle-again'),
       completeCardCount: document.getElementById('complete-card-count'),
@@ -109,11 +124,14 @@ class PerfectShuffleApp {
 
   init() {
     this.setupEventListeners();
+    this.loadPreferences();
     this.initVoices();
     this.initPiles();
     this.updateBoardDisplay();
     this.registerServiceWorker();
-    this.requestWakeLock();
+    if (this.wakeLockEnabled) {
+      this.requestWakeLock();
+    }
   }
 
   /* ========================================================================
@@ -200,6 +218,7 @@ class PerfectShuffleApp {
         this.dom.customDeckGroup.classList.add('hidden');
         this.deckSize = parseInt(val, 10);
       }
+      this.savePreferences();
       this.resetShuffle();
     });
 
@@ -207,6 +226,7 @@ class PerfectShuffleApp {
       const val = parseInt(e.target.value, 10);
       if (val && val >= 9 && val <= 500) {
         this.deckSize = val;
+        this.savePreferences();
         this.resetShuffle();
       }
     });
@@ -214,16 +234,20 @@ class PerfectShuffleApp {
     this.dom.settingVoiceSelect.addEventListener('change', (e) => {
       const uri = e.target.value;
       this.selectedVoice = this.availableVoices.find(v => v.voiceURI === uri) || null;
+      this.selectedVoiceURI = uri;
+      this.savePreferences();
     });
 
     this.dom.settingSpeechRate.addEventListener('input', (e) => {
       this.speechRate = parseFloat(e.target.value);
       this.dom.speechRateLabel.textContent = `${this.speechRate.toFixed(2)}x`;
+      this.savePreferences();
     });
 
     this.dom.settingPacerInterval.addEventListener('input', (e) => {
       this.pacerInterval = parseFloat(e.target.value);
       this.dom.pacerIntervalLabel.textContent = `${this.pacerInterval.toFixed(1)}s / card`;
+      this.savePreferences();
       if (this.autoPacing) {
         this.stopAutoPacer();
         this.startAutoPacer();
@@ -232,18 +256,22 @@ class PerfectShuffleApp {
 
     this.dom.settingSpeakCenter.addEventListener('change', (e) => {
       this.speakCenter = e.target.checked;
+      this.savePreferences();
     });
 
     this.dom.settingSpeakOclock.addEventListener('change', (e) => {
       this.speakOclock = e.target.checked;
+      this.savePreferences();
     });
 
     this.dom.settingSoundFx.addEventListener('change', (e) => {
       this.soundFxEnabled = e.target.checked;
+      this.savePreferences();
     });
 
     this.dom.settingWakeLock.addEventListener('change', (e) => {
       this.wakeLockEnabled = e.target.checked;
+      this.savePreferences();
       if (this.wakeLockEnabled) {
         this.requestWakeLock();
       } else {
@@ -253,8 +281,16 @@ class PerfectShuffleApp {
 
     this.dom.settingDealMode.addEventListener('change', (e) => {
       this.dealMode = e.target.value;
+      this.savePreferences();
       this.resetShuffle();
     });
+
+    if (this.dom.btnRestoreDefaults) {
+      this.dom.btnRestoreDefaults.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.restoreDefaults();
+      });
+    }
 
     if (this.dom.btnSkipSpot) {
       this.dom.btnSkipSpot.addEventListener('click', (e) => {
@@ -399,7 +435,12 @@ class PerfectShuffleApp {
   switchMode(newMode) {
     if (this.mode === newMode) return;
     this.mode = newMode;
+    this.applyModeUI(newMode);
+    this.savePreferences();
+    this.resetShuffle();
+  }
 
+  applyModeUI(newMode) {
     if (newMode === 'clock') {
       this.dom.btnModeClock.classList.add('active');
       this.dom.btnModeClock.setAttribute('aria-pressed', 'true');
@@ -417,8 +458,126 @@ class PerfectShuffleApp {
       this.dom.gridBoard.classList.remove('hidden');
       this.dom.clockBoard.classList.add('hidden');
     }
+  }
+
+  /* ========================================================================
+     Preferences & Persistence (localStorage)
+     ======================================================================== */
+  loadPreferences() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (!stored) return;
+
+      const prefs = Object.assign({}, DEFAULT_PREFERENCES, JSON.parse(stored));
+
+      this.mode = prefs.mode === 'grid' ? 'grid' : 'clock';
+      this.deckSize = typeof prefs.deckSize === 'number' && prefs.deckSize >= 9 ? prefs.deckSize : 52;
+      this.dealMode = prefs.dealMode === 'casual' ? 'casual' : 'counted';
+      this.speechRate = typeof prefs.speechRate === 'number' ? prefs.speechRate : 1.25;
+      this.pacerInterval = typeof prefs.pacerInterval === 'number' ? prefs.pacerInterval : 1.6;
+      this.autoPacing = Boolean(prefs.autoPacing);
+      this.voiceEnabled = Boolean(prefs.voiceEnabled);
+      this.selectedVoiceURI = prefs.selectedVoiceURI || '';
+      this.speakCenter = Boolean(prefs.speakCenter);
+      this.speakOclock = Boolean(prefs.speakOclock);
+      this.soundFxEnabled = Boolean(prefs.soundFxEnabled);
+      this.wakeLockEnabled = Boolean(prefs.wakeLockEnabled);
+
+      // Reflect into UI elements
+      if (prefs.deckPreset === 'custom' || !['52', '54', '60', '100', '32', '40'].includes(String(this.deckSize))) {
+        this.dom.settingDeckPreset.value = 'custom';
+        this.dom.customDeckGroup.classList.remove('hidden');
+        this.dom.settingCustomDeck.value = this.deckSize;
+      } else {
+        this.dom.settingDeckPreset.value = String(this.deckSize);
+        this.dom.customDeckGroup.classList.add('hidden');
+        this.dom.settingCustomDeck.value = this.deckSize;
+      }
+
+      this.dom.settingDealMode.value = this.dealMode;
+      this.dom.settingSpeechRate.value = this.speechRate;
+      this.dom.speechRateLabel.textContent = `${this.speechRate.toFixed(2)}x`;
+      this.dom.settingPacerInterval.value = this.pacerInterval;
+      this.dom.pacerIntervalLabel.textContent = `${this.pacerInterval.toFixed(1)}s / card`;
+
+      this.dom.settingSpeakCenter.checked = this.speakCenter;
+      this.dom.settingSpeakOclock.checked = this.speakOclock;
+      this.dom.settingSoundFx.checked = this.soundFxEnabled;
+      this.dom.settingWakeLock.checked = this.wakeLockEnabled;
+
+      this.applyModeUI(this.mode);
+      this.applyVoiceUI(this.voiceEnabled);
+      this.applyAutoPacerUI(this.autoPacing);
+    } catch (e) {
+      console.warn('Unable to load preferences from localStorage', e);
+    }
+  }
+
+  savePreferences() {
+    try {
+      const prefs = {
+        mode: this.mode,
+        deckPreset: this.dom.settingDeckPreset.value,
+        deckSize: this.deckSize,
+        dealMode: this.dealMode,
+        speechRate: this.speechRate,
+        pacerInterval: this.pacerInterval,
+        autoPacing: this.autoPacing,
+        voiceEnabled: this.voiceEnabled,
+        selectedVoiceURI: this.selectedVoice ? this.selectedVoice.voiceURI : this.selectedVoiceURI,
+        speakCenter: this.speakCenter,
+        speakOclock: this.speakOclock,
+        soundFxEnabled: this.soundFxEnabled,
+        wakeLockEnabled: this.wakeLockEnabled
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));
+    } catch (e) {
+      // Storage unavailable or quota exceeded
+    }
+  }
+
+  restoreDefaults() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {}
+
+    // Reset instance properties to defaults
+    Object.assign(this, DEFAULT_PREFERENCES);
+    this.selectedVoice = null;
+    this.selectedVoiceURI = '';
+
+    // Reset DOM controls
+    this.dom.settingDeckPreset.value = '52';
+    this.dom.customDeckGroup.classList.add('hidden');
+    this.dom.settingCustomDeck.value = 52;
+    this.dom.settingDealMode.value = 'counted';
+    this.dom.settingSpeechRate.value = 1.25;
+    this.dom.speechRateLabel.textContent = '1.25x';
+    this.dom.settingPacerInterval.value = 1.6;
+    this.dom.pacerIntervalLabel.textContent = '1.6s / card';
+    this.dom.settingSpeakCenter.checked = true;
+    this.dom.settingSpeakOclock.checked = false;
+    this.dom.settingSoundFx.checked = true;
+    this.dom.settingWakeLock.checked = true;
+    this.dom.settingVoiceSelect.value = '';
+
+    this.applyModeUI('clock');
+    this.applyVoiceUI(true);
+    this.applyAutoPacerUI(false);
 
     this.resetShuffle();
+
+    // Visual button feedback
+    const btn = this.dom.btnRestoreDefaults;
+    if (btn) {
+      const originalText = btn.textContent;
+      btn.textContent = 'Defaults Restored ✓';
+      btn.classList.add('success-flash');
+      setTimeout(() => {
+        btn.textContent = originalText;
+        btn.classList.remove('success-flash');
+      }, 1800);
+    }
   }
 
   /* ========================================================================
@@ -484,7 +643,11 @@ class PerfectShuffleApp {
   }
 
   resetShuffle() {
-    this.stopAutoPacer();
+    if (this.pacerTimer) {
+      clearTimeout(this.pacerTimer);
+      this.pacerTimer = null;
+    }
+    this.applyAutoPacerUI(this.autoPacing);
     this.currentIndex = -1;
     this.startTime = null;
     this.endTime = null;
@@ -503,14 +666,19 @@ class PerfectShuffleApp {
   }
 
   onShuffleComplete() {
-    this.stopAutoPacer();
+    if (this.pacerTimer) {
+      clearTimeout(this.pacerTimer);
+      this.pacerTimer = null;
+    }
+    this.applyAutoPacerUI(this.autoPacing);
     this.endTime = Date.now();
-    const durationSeconds = Math.round((this.endTime - this.startTime) / 1000);
+    const durationSeconds = this.startTime ? Math.round((this.endTime - this.startTime) / 1000) : 0;
     const mins = Math.floor(durationSeconds / 60);
     const secs = durationSeconds % 60;
     const formattedTime = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 
-    this.dom.completeCardCount.textContent = this.deckSize;
+    const finalCount = this.dealMode === 'casual' && this.currentIndex >= 0 ? this.currentIndex + 1 : this.deckSize;
+    this.dom.completeCardCount.textContent = finalCount;
     this.dom.completeTime.textContent = formattedTime;
 
     // Victory fanfare & speech
@@ -705,6 +873,14 @@ class PerfectShuffleApp {
         opt.textContent = `${voice.name} (${voice.lang})`;
         this.dom.settingVoiceSelect.appendChild(opt);
       });
+
+      // Restore saved voice preference
+      if (this.selectedVoiceURI) {
+        this.selectedVoice = this.availableVoices.find(v => v.voiceURI === this.selectedVoiceURI) || null;
+        if (this.selectedVoice) {
+          this.dom.settingVoiceSelect.value = this.selectedVoice.voiceURI;
+        }
+      }
     };
 
     loadVoiceOptions();
@@ -715,16 +891,24 @@ class PerfectShuffleApp {
 
   toggleVoice() {
     this.voiceEnabled = !this.voiceEnabled;
+    this.applyVoiceUI(this.voiceEnabled);
+    this.savePreferences();
     if (this.voiceEnabled) {
+      this.speak("Voice enabled");
+    } else {
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    }
+  }
+
+  applyVoiceUI(enabled) {
+    if (enabled) {
       this.dom.btnToggleVoice.classList.add('active');
       this.dom.iconVoiceOn.classList.remove('hidden');
       this.dom.iconVoiceOff.classList.add('hidden');
-      this.speak("Voice enabled");
     } else {
       this.dom.btnToggleVoice.classList.remove('active');
       this.dom.iconVoiceOn.classList.add('hidden');
       this.dom.iconVoiceOff.classList.remove('hidden');
-      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
     }
   }
 
@@ -844,19 +1028,34 @@ class PerfectShuffleApp {
      ======================================================================== */
   toggleAutoPacer() {
     if (this.autoPacing) {
-      this.stopAutoPacer();
+      this.stopAutoPacer(true);
     } else {
-      this.startAutoPacer();
+      this.startAutoPacer(true);
     }
   }
 
-  startAutoPacer() {
-    this.stopAutoPacer();
+  applyAutoPacerUI(active) {
+    if (active) {
+      this.dom.btnToggleAuto.classList.add('is-active');
+      this.dom.iconAutoPlay.classList.add('hidden');
+      this.dom.iconAutoPause.classList.remove('hidden');
+      this.dom.autoBtnLabel.textContent = `Auto: ${this.pacerInterval.toFixed(1)}s`;
+    } else {
+      this.dom.btnToggleAuto.classList.remove('is-active');
+      this.dom.iconAutoPlay.classList.remove('hidden');
+      this.dom.iconAutoPause.classList.add('hidden');
+      this.dom.autoBtnLabel.textContent = 'Auto: OFF';
+    }
+  }
+
+  startAutoPacer(savePref = false) {
+    if (this.pacerTimer) {
+      clearTimeout(this.pacerTimer);
+      this.pacerTimer = null;
+    }
     this.autoPacing = true;
-    this.dom.btnToggleAuto.classList.add('is-active');
-    this.dom.iconAutoPlay.classList.add('hidden');
-    this.dom.iconAutoPause.classList.remove('hidden');
-    this.dom.autoBtnLabel.textContent = `Auto: ${this.pacerInterval.toFixed(1)}s`;
+    this.applyAutoPacerUI(true);
+    if (savePref) this.savePreferences();
 
     if (this.currentIndex === -1) {
       this.startShuffle();
@@ -871,16 +1070,14 @@ class PerfectShuffleApp {
     }, intervalMs);
   }
 
-  stopAutoPacer() {
+  stopAutoPacer(savePref = false) {
     this.autoPacing = false;
     if (this.pacerTimer) {
       clearTimeout(this.pacerTimer);
       this.pacerTimer = null;
     }
-    this.dom.btnToggleAuto.classList.remove('is-active');
-    this.dom.iconAutoPlay.classList.remove('hidden');
-    this.dom.iconAutoPause.classList.add('hidden');
-    this.dom.autoBtnLabel.textContent = 'Auto: OFF';
+    this.applyAutoPacerUI(false);
+    if (savePref) this.savePreferences();
   }
 
   /* ========================================================================
