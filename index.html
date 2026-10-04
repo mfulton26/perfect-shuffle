@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#064e3b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="PerfectShuffle">
+  <meta name="description" content="Mathematically fair zero-bend card shuffler with voice synthesis and clock or 3x3 grid layouts.">
+  <meta property="og:title" content="Perfect Shuffle — Hands-Free Card Shuffler">
+  <meta property="og:description" content="Mathematically fair zero-bend card shuffler with voice synthesis and clock or 3x3 grid layouts.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="./icon.svg">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Perfect Shuffle — Hands-Free Card Shuffler">
+  <meta name="twitter:description" content="Mathematically fair zero-bend card shuffler with voice synthesis and clock or 3x3 grid layouts.">
+  <meta name="twitter:image" content="./icon.svg">
+  <title>Perfect Shuffle — Hands-Free Card Shuffler</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./icon.svg">
+  <link rel="apple-touch-icon" href="./icon.svg">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">Perfect Shuffle</h1>
+          <p class="brand-subtitle">Hands-Free • Zero-Bend True Randomizer</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Layout Toggle -->
+        <div class="layout-toggle" role="group" aria-label="Layout mode selection">
+          <button id="btn-mode-clock" class="toggle-btn active" title="Clock Layout (0–12)" aria-pressed="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="9"/>
+              <circle cx="12" cy="12" r="2" fill="currentColor"/>
+              <line x1="12" y1="5" x2="12" y2="7"/>
+              <line x1="19" y1="12" x2="17" y2="12"/>
+              <line x1="12" y1="19" x2="12" y2="17"/>
+              <line x1="5" y1="12" x2="7" y2="12"/>
+            </svg>
+            <span>Clock</span>
+          </button>
+          <button id="btn-mode-grid" class="toggle-btn" title="3x3 Grid Layout (1–9)" aria-pressed="false">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="5" height="5" rx="1"/>
+              <rect x="10" y="3" width="5" height="5" rx="1"/>
+              <rect x="17" y="3" width="5" height="5" rx="1"/>
+              <rect x="3" y="10" width="5" height="5" rx="1"/>
+              <rect x="10" y="10" width="5" height="5" rx="1"/>
+              <rect x="17" y="10" width="5" height="5" rx="1"/>
+              <rect x="3" y="17" width="5" height="5" rx="1"/>
+              <rect x="10" y="17" width="5" height="5" rx="1"/>
+              <rect x="17" y="17" width="5" height="5" rx="1"/>
+            </svg>
+            <span>3×3 Grid</span>
+          </button>
+        </div>
+
+        <!-- Voice Toggle Icon Button -->
+        <button id="btn-toggle-voice" class="icon-btn active" title="Toggle Voice Announcements" aria-label="Toggle Voice">
+          <svg class="icon-voice-on" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <svg class="icon-voice-off hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+        </button>
+
+        <!-- Help Guide Button -->
+        <button id="btn-help" class="icon-btn" title="How to Setup & Shuffle" aria-label="Setup Guide">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+            <circle cx="12" cy="17" r="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="btn-settings" class="icon-btn" title="Settings (Voice, Speed, Deck Size)" aria-label="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-stage">
+      <!-- Progress Bar & Stats -->
+      <section class="progress-bar-container" aria-label="Shuffle Progress">
+        <div class="progress-info">
+          <span id="stat-card-count" class="stat-text">Card <strong>0</strong> of <strong>52</strong></span>
+          <span id="stat-cards-remaining" class="stat-subtext">52 remaining</span>
+          <span id="stat-percent" class="stat-percent">0%</span>
+        </div>
+        <div class="progress-track" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+          <div id="progress-fill" class="progress-fill" style="width: 0%;"></div>
+        </div>
+      </section>
+
+      <!-- Active Selection Callout Display -->
+      <section id="callout-card" class="callout-card" aria-live="assertive">
+        <div class="callout-status-badge" id="callout-status-badge">READY TO SHUFFLE</div>
+        <div class="callout-main">
+          <div class="callout-instruction" id="callout-instruction">Tap Anywhere or Press Space to Start</div>
+          <div class="callout-target" id="callout-target">—</div>
+        </div>
+        <div class="callout-details" id="callout-details">
+          <span id="callout-pile-info">Deal cards face-down into positions first</span>
+        </div>
+      </section>
+
+      <!-- Interactive Layout Viewport -->
+      <div id="layout-viewport" class="layout-viewport">
+        <!-- Tap ripple effect overlay -->
+        <div id="tap-feedback" class="tap-feedback" aria-hidden="true"></div>
+
+        <!-- Clock Face Layout (13 positions: 0 center + 1-12) -->
+        <div id="clock-board" class="clock-board" aria-label="Clock Shuffle Layout">
+          <!-- Outer circular track ring -->
+          <div class="clock-track-ring" aria-hidden="true"></div>
+
+          <!-- Center Zone (0) -->
+          <div class="zone-node zone-center" data-zone="0" id="zone-clock-0" role="button" tabindex="0" aria-label="Zone 0 Center">
+            <div class="zone-badge">CENTER</div>
+            <div class="zone-number">0</div>
+            <div class="zone-card-counter" id="counter-clock-0">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+
+          <!-- 12 Clock Nodes (1 to 12) -->
+          <div class="zone-node zone-hour zone-hour-1" data-zone="1" id="zone-clock-1" role="button" tabindex="0">
+            <div class="zone-number">1</div>
+            <div class="zone-card-counter" id="counter-clock-1">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-2" data-zone="2" id="zone-clock-2" role="button" tabindex="0">
+            <div class="zone-number">2</div>
+            <div class="zone-card-counter" id="counter-clock-2">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-3" data-zone="3" id="zone-clock-3" role="button" tabindex="0">
+            <div class="zone-number">3</div>
+            <div class="zone-card-counter" id="counter-clock-3">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-4" data-zone="4" id="zone-clock-4" role="button" tabindex="0">
+            <div class="zone-number">4</div>
+            <div class="zone-card-counter" id="counter-clock-4">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-5" data-zone="5" id="zone-clock-5" role="button" tabindex="0">
+            <div class="zone-number">5</div>
+            <div class="zone-card-counter" id="counter-clock-5">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-6" data-zone="6" id="zone-clock-6" role="button" tabindex="0">
+            <div class="zone-number">6</div>
+            <div class="zone-card-counter" id="counter-clock-6">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-7" data-zone="7" id="zone-clock-7" role="button" tabindex="0">
+            <div class="zone-number">7</div>
+            <div class="zone-card-counter" id="counter-clock-7">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-8" data-zone="8" id="zone-clock-8" role="button" tabindex="0">
+            <div class="zone-number">8</div>
+            <div class="zone-card-counter" id="counter-clock-8">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-9" data-zone="9" id="zone-clock-9" role="button" tabindex="0">
+            <div class="zone-number">9</div>
+            <div class="zone-card-counter" id="counter-clock-9">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-10" data-zone="10" id="zone-clock-10" role="button" tabindex="0">
+            <div class="zone-number">10</div>
+            <div class="zone-card-counter" id="counter-clock-10">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-11" data-zone="11" id="zone-clock-11" role="button" tabindex="0">
+            <div class="zone-number">11</div>
+            <div class="zone-card-counter" id="counter-clock-11">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-hour zone-hour-12" data-zone="12" id="zone-clock-12" role="button" tabindex="0">
+            <div class="zone-number">12</div>
+            <div class="zone-card-counter" id="counter-clock-12">4</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+        </div>
+
+        <!-- 3x3 Grid Layout (9 positions: 1-9) -->
+        <div id="grid-board" class="grid-board hidden" aria-label="3x3 Grid Shuffle Layout">
+          <div class="zone-node zone-grid" data-zone="1" id="zone-grid-1" role="button" tabindex="0">
+            <div class="zone-pos-label">Top Left</div>
+            <div class="zone-number">1</div>
+            <div class="zone-card-counter" id="counter-grid-1">6</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-grid" data-zone="2" id="zone-grid-2" role="button" tabindex="0">
+            <div class="zone-pos-label">Top Mid</div>
+            <div class="zone-number">2</div>
+            <div class="zone-card-counter" id="counter-grid-2">6</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-grid" data-zone="3" id="zone-grid-3" role="button" tabindex="0">
+            <div class="zone-pos-label">Top Right</div>
+            <div class="zone-number">3</div>
+            <div class="zone-card-counter" id="counter-grid-3">6</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-grid" data-zone="4" id="zone-grid-4" role="button" tabindex="0">
+            <div class="zone-pos-label">Mid Left</div>
+            <div class="zone-number">4</div>
+            <div class="zone-card-counter" id="counter-grid-4">6</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-grid zone-grid-center" data-zone="5" id="zone-grid-5" role="button" tabindex="0">
+            <div class="zone-pos-label">CENTER</div>
+            <div class="zone-number">5</div>
+            <div class="zone-card-counter" id="counter-grid-5">6</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-grid" data-zone="6" id="zone-grid-6" role="button" tabindex="0">
+            <div class="zone-pos-label">Mid Right</div>
+            <div class="zone-number">6</div>
+            <div class="zone-card-counter" id="counter-grid-6">6</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-grid" data-zone="7" id="zone-grid-7" role="button" tabindex="0">
+            <div class="zone-pos-label">Bottom Left</div>
+            <div class="zone-number">7</div>
+            <div class="zone-card-counter" id="counter-grid-7">6</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-grid" data-zone="8" id="zone-grid-8" role="button" tabindex="0">
+            <div class="zone-pos-label">Bottom Mid</div>
+            <div class="zone-number">8</div>
+            <div class="zone-card-counter" id="counter-grid-8">5</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+          <div class="zone-node zone-grid" data-zone="9" id="zone-grid-9" role="button" tabindex="0">
+            <div class="zone-pos-label">Bottom Right</div>
+            <div class="zone-number">9</div>
+            <div class="zone-card-counter" id="counter-grid-9">5</div>
+            <div class="zone-pulse-ring"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Controls & Giant Tap Trigger -->
+    <footer class="app-footer">
+      <div class="controls-toolbar">
+        <!-- Previous / Undo -->
+        <button id="btn-undo" class="control-btn secondary-btn" title="Undo Previous Pick (Left Arrow)" aria-label="Undo Pick" disabled>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span>Undo</span>
+        </button>
+
+        <!-- Giant Tap / Advance Button -->
+        <button id="btn-primary-action" class="primary-action-btn" aria-label="Advance to Next Card">
+          <span class="btn-ripple" aria-hidden="true"></span>
+          <span id="primary-btn-label" class="btn-text">TAP TO START</span>
+          <span class="btn-subtext" id="primary-btn-subtext">or press Spacebar</span>
+        </button>
+
+        <!-- Auto-Advance (Pacer) Controls -->
+        <div class="pacer-group">
+          <button id="btn-toggle-auto" class="control-btn secondary-btn" title="Toggle Auto-Pace Mode" aria-label="Toggle Auto Pacer">
+            <svg id="icon-auto-play" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            <svg id="icon-auto-pause" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="6" y="4" width="4" height="16"/>
+              <rect x="14" y="4" width="4" height="16"/>
+            </svg>
+            <span id="auto-btn-label">Auto: OFF</span>
+          </button>
+        </div>
+
+        <!-- Reset / New Shuffle -->
+        <button id="btn-reset" class="control-btn secondary-btn" title="Start Fresh Shuffle (R)" aria-label="New Shuffle">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          <span>Reset</span>
+        </button>
+      </div>
+
+      <div id="casual-actions" class="casual-actions hidden">
+        <button id="btn-skip-spot" class="text-action-btn" title="Pick another random spot if current spot is empty (S)">Spot Empty? Reroll (<kbd>S</kbd>)</button>
+        <button id="btn-finish-casual" class="text-action-btn" title="Finish shuffle now if all cards on table are picked">Table Cleared? Finish</button>
+      </div>
+
+      <div class="keyboard-hints" aria-hidden="true">
+        <span>Tap screen / Spacebar: Next</span> • 
+        <span>Left Arrow: Undo</span> • 
+        <span>A: Auto</span> • 
+        <span>M: Mute</span> • 
+        <span id="hint-reroll" class="hidden">S: Reroll</span>
+      </div>
+    </footer>
+
+    <!-- Setup & Instructions Modal -->
+    <div id="modal-help" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="help-title" class="modal-title">How Perfect Shuffle Works</h2>
+          <button class="modal-close-btn" data-close="modal-help" aria-label="Close guide">&times;</button>
+        </div>
+        <div class="modal-body help-content">
+          <div class="help-step">
+            <div class="step-num">1</div>
+            <div class="step-text">
+              <h3>Choose Your Layout</h3>
+              <p><strong>Clock Layout:</strong> 13 positions (Center 0, plus 1–12 like hours on a clock). Perfect for 52-card standard decks (exactly 4 cards per pile!).</p>
+              <p><strong>3×3 Grid:</strong> 9 positions (1–9). Great for smaller tables or games with 60+ cards.</p>
+            </div>
+          </div>
+
+          <div class="help-step">
+            <div class="step-num">2</div>
+            <div class="step-text">
+              <h3>Lay Out Cards (Two Methods)</h3>
+              <p><strong>🎯 Counted Piles:</strong> Deal cards evenly face-down (e.g. 4 cards each for 52 cards on the Clock). The app tracks remaining cards and never calls an empty pile.</p>
+              <p><strong>⚡ Casual Spread (Fast Setup):</strong> Drop clumps or casually spread cards without counting! If an announced spot is empty, simply take from the <strong>next clockwise pile</strong>.</p>
+              <p>Cards stay <strong>face down the entire time</strong>.</p>
+            </div>
+          </div>
+
+          <div class="help-step">
+            <div class="step-num">3</div>
+            <div class="step-text">
+              <h3>Pick as Dictated</h3>
+              <p>The app calls out where to grab the next card (e.g. <em>"Seven"</em>, <em>"Center"</em>, <em>"Twelve"</em>) with voice and high-contrast visuals. Pick the top card from that pile and stack it face-down onto your collected hand.</p>
+            </div>
+          </div>
+
+          <div class="help-step">
+            <div class="step-num">4</div>
+            <div class="step-text">
+              <h3>Hands-Free & Non-Destructive</h3>
+              <p>Tap anywhere on screen (with a finger or knuckle) to advance, or turn on <strong>Auto-Pacer</strong> to pick in rhythm without touching your device. When all cards are collected, your deck is 100% truly randomized with zero card bending or riffle damage!</p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="primary-btn" data-close="modal-help">Got it, Let's Shuffle!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="modal-settings" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2 id="settings-title" class="modal-title">Settings & Audio</h2>
+          <button class="modal-close-btn" data-close="modal-settings" aria-label="Close settings">&times;</button>
+        </div>
+        <div class="modal-body settings-form">
+          <!-- Deck Size -->
+          <div class="form-group">
+            <label for="setting-deck-preset">Deck Size:</label>
+            <select id="setting-deck-preset" class="form-select">
+              <option value="52">Standard Poker / Blackjack (52 cards)</option>
+              <option value="54">Standard + 2 Jokers (54 cards)</option>
+              <option value="60">TCG / Magic / Pokémon (60 cards)</option>
+              <option value="100">MTG Commander / EDH (100 cards)</option>
+              <option value="32">Euchre / Skat / Piquet (32 cards)</option>
+              <option value="40">Baraja Española / Uno (40 cards)</option>
+              <option value="custom">Custom card count...</option>
+            </select>
+          </div>
+
+          <!-- Dealing Style / Distribution Mode -->
+          <div class="form-group">
+            <label for="setting-deal-mode">Dealing Method:</label>
+            <select id="setting-deal-mode" class="form-select">
+              <option value="counted">Counted Piles (Precise — tracks exact counts per pile)</option>
+              <option value="casual">Casual Spread (Fast Setup — drop cards without counting!)</option>
+            </select>
+          </div>
+
+          <div id="custom-deck-group" class="form-group hidden">
+            <label for="setting-custom-deck">Custom Card Count:</label>
+            <input type="number" id="setting-custom-deck" class="form-input" min="9" max="500" value="52">
+          </div>
+
+          <!-- Speech Voice -->
+          <div class="form-group">
+            <div class="slider-header">
+              <label for="setting-voice-select">Speech Synthesis Voice:</label>
+              <button type="button" id="btn-test-voice" class="text-action-btn">▶ Test Voice</button>
+            </div>
+            <select id="setting-voice-select" class="form-select">
+              <option value="">Default System Voice</option>
+            </select>
+          </div>
+
+          <!-- Speech Rate -->
+          <div class="form-group">
+            <div class="slider-header">
+              <label for="setting-speech-rate">Voice Speed:</label>
+              <span id="speech-rate-label" class="slider-val">1.25x</span>
+            </div>
+            <input type="range" id="setting-speech-rate" class="form-range" min="0.8" max="2.0" step="0.05" value="1.25">
+          </div>
+
+          <!-- Auto Pacer Speed -->
+          <div class="form-group">
+            <div class="slider-header">
+              <label for="setting-pacer-interval">Auto-Pace Rhythm:</label>
+              <span id="pacer-interval-label" class="slider-val">1.6s / card</span>
+            </div>
+            <input type="range" id="setting-pacer-interval" class="form-range" min="1.0" max="3.5" step="0.1" value="1.6">
+          </div>
+
+          <!-- Speech Style Options -->
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="setting-speak-center" checked>
+              <span>Say "Center" instead of "Zero" for position 0</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="setting-speak-oclock">
+              <span>Say "o'clock" after clock numbers (e.g. "7 o'clock")</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="setting-sound-fx" checked>
+              <span>Play tactile audio cues &amp; fanfare (Web Audio)</span>
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" id="setting-wake-lock" checked>
+              <span>Keep screen awake during shuffle (Wake Lock API)</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="primary-btn" data-close="modal-settings">Save &amp; Return</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shuffle Complete Celebration Modal -->
+    <div id="modal-complete" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="complete-title">
+      <div class="modal-card modal-celebrate">
+        <div class="celebrate-badge" aria-hidden="true">🎉</div>
+        <h2 id="complete-title" class="modal-title">Deck Perfectly Shuffled!</h2>
+        <p class="celebrate-subtitle">All <span id="complete-card-count">52</span> cards picked and randomized.</p>
+        <div class="celebrate-stats">
+          <div class="stat-box">
+            <span class="stat-value" id="complete-time">0:42</span>
+            <span class="stat-name">Total Time</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value" id="complete-entropy">100%</span>
+            <span class="stat-name">Random Entropy</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-value">0</span>
+            <span class="stat-name">Bent Cards</span>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="btn-shuffle-again" class="primary-btn">Shuffle Another Deck</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

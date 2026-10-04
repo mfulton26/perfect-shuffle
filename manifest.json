@@ -1,0 +1,16 @@
+{
+  "name": "Perfect Shuffle - Hands-Free Card Shuffler",
+  "short_name": "PerfectShuffle",
+  "description": "True random card shuffler without bending or riffle shuffling using guided clock and grid distributions.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#059669",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
